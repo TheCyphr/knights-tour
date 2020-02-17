@@ -3,5 +3,5 @@
 ################################################################################
 
 /.vs
-/KnightsTourSolution/bin
-/KnightsTourSolution/obj
+*/bin
+*/obj
