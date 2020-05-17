@@ -1,18 +1,26 @@
 ﻿using ImprovedKnightsTourSolution.Models;
+using ImprovedKnightsTourSolution.Utilities;
 using System.Collections.Generic;
 using System.Text;
 
-namespace ImprovedKnightsTourSolution
+namespace ImprovedKnightsTourSolution.Interfaces
 {
-    public class Chessboard
+    public interface IChessboardService
     {
-        private readonly int[,] _chessBoard;
+        public int[,] Chessboard { get; }
+        public bool TrySetSquareValue(Point point, char identifier);
+        public string ToString();
+    }
+
+    public class ChessboardService : IChessboardService
+    {
+        public int[,] Chessboard { get; }
         private readonly Dictionary<int, char> _chessboardSquareIdentifiers;
         private const char DEFAULT_IDENTIFIER = '0';
 
-        public Chessboard()
+        public ChessboardService()
         {
-            _chessBoard = new int[8, 8];
+            Chessboard = new int[8, 8];
             _chessboardSquareIdentifiers = new Dictionary<int, char>() { { 0, DEFAULT_IDENTIFIER } };
         }
 
@@ -36,30 +44,25 @@ namespace ImprovedKnightsTourSolution
         {
             var identifierIndex = AssignIdentifierIndex(identifier);
 
-            var isOnChessboard = point switch
-            {
-                var (x, y) when x < 0 || y < 0 => false,
-                var (x, y) when x > _chessBoard.GetLength(1) || y > _chessBoard.GetLength(0) => false,
-                _ => true
-            };
+            var pointIsOnChessboard = ChessboardUtilities.PointIsOnChessboard(point, Chessboard);
 
-            if (isOnChessboard)
+            if (pointIsOnChessboard)
             {
-                _chessBoard[point.Y, point.X] = identifierIndex;
+                Chessboard[point.Y, point.X] = identifierIndex;
             }
 
-            return isOnChessboard;
+            return pointIsOnChessboard;
         }
 
         public override string ToString()
         {
             var stringBuilder = new StringBuilder();
 
-            for (int row = 0; row < _chessBoard.GetLength(0); row++)
+            for (int row = 0; row < Chessboard.GetLength(0); row++)
             {
-                for (int column = 0; column < _chessBoard.GetLength(1); column++)
+                for (int column = 0; column < Chessboard.GetLength(1); column++)
                 {
-                    char squareCharacter = _chessboardSquareIdentifiers[_chessBoard[row, column]];
+                    char squareCharacter = _chessboardSquareIdentifiers[Chessboard[row, column]];
                     stringBuilder.Append(squareCharacter);
                 }
 

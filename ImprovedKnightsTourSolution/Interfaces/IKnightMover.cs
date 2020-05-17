@@ -40,7 +40,7 @@ namespace ImprovedKnightsTourSolution.Interfaces
             if (((IKnightMover)this).IsValidMove(move))
             {
                 var current = superKnight.CurrentPosition;
-                var updated = new Point(current.X + move.XMove, current.Y + move.YMove);
+                var updated = move.MovePoint(current);
                 superKnight.CurrentPosition = updated;
 
                 return true;

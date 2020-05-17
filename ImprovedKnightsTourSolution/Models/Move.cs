@@ -10,5 +10,7 @@
             XMove = xMove;
             YMove = yMove;
         }
+
+        public Point MovePoint(Point point) => new Point(point.X + XMove, point.Y + YMove);
     }
 }
