@@ -1,5 +1,6 @@
 ﻿using ImprovedKnightsTourSolution.Models;
 using ImprovedKnightsTourSolution.Utilities;
+using System;
 using System.Collections.Generic;
 using System.Text;
 
@@ -9,7 +10,7 @@ namespace ImprovedKnightsTourSolution.Interfaces
     {
         public int[,] Chessboard { get; }
         public bool TrySetSquareValue(Point point, char identifier);
-        public string ToString();
+        public void DisplayChessboard();
     }
 
     public class ChessboardService : IChessboardService
@@ -54,7 +55,7 @@ namespace ImprovedKnightsTourSolution.Interfaces
             return pointIsOnChessboard;
         }
 
-        public override string ToString()
+        public void DisplayChessboard()
         {
             var stringBuilder = new StringBuilder();
 
@@ -69,7 +70,7 @@ namespace ImprovedKnightsTourSolution.Interfaces
                 stringBuilder.AppendLine();
             }
 
-            return stringBuilder.ToString();
+            Console.Write(stringBuilder.ToString());
         }
     }
 }
