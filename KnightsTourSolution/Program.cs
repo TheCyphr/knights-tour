@@ -14,17 +14,15 @@ namespace ImprovedKnightsTourSolution
                 {
                     IKnightMover knightMover = new KnightMover();
                     IChessboardService chessboardService = new ChessboardService();
-                    IAccessibilityService accessibilityService = new AccessibilityService();
-                    IMoveChooser moveChooser = new MoveChooser(accessibilityService);
-                    IGameController gameController = new GameController(accessibilityService, chessboardService, moveChooser, knightMover);
+                    IMoveChooser moveChooser = new MoveChooser(new MoveRankService());
+                    IKnightsTourSimulator knightsTourSimulator = new KnightsTourSimulator(chessboardService, moveChooser, knightMover);
 
-                    bool isGameWon = gameController.PlayGame(new Point(i, j), isEnabledWaitForUserInput: false);
-                    if (!isGameWon) throw new Exception($"Lost game at starting point ({i}, {j})");
+                    bool isSolved = knightsTourSimulator.Solve(new Point(i, j));
+                    if (!isSolved) throw new Exception($"Solution failed with starting point ({i}, {j})");
                 }
             }
-
-            Console.Clear();
-            Console.WriteLine("Game is won from all starting points, good job!");
+            
+            Console.WriteLine("Solved!");
         }
     }
 }

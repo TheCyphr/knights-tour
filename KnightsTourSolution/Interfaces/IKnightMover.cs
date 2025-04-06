@@ -16,12 +16,11 @@ namespace ImprovedKnightsTourSolution.Interfaces
 
             return Moves.Contains(move);
         }
-        public bool TryMoveKnight(SuperKnight superKnight, Move move);
     }
 
     public class KnightMover : IKnightMover
     {
-        private readonly Move[] moves =
+        Move[] IKnightMover.Moves { get; } =
         {
             new Move(-1, 2),
             new Move(-2, 1),
@@ -32,21 +31,5 @@ namespace ImprovedKnightsTourSolution.Interfaces
             new Move(2, 1),
             new Move(1, 2)
         };
-
-        Move[] IKnightMover.Moves => moves;
-
-        bool IKnightMover.TryMoveKnight(SuperKnight superKnight, Move move)
-        {
-            if (((IKnightMover)this).IsValidMove(move))
-            {
-                var current = superKnight.CurrentPosition;
-                var updated = move.MovePoint(current);
-                superKnight.CurrentPosition = updated;
-
-                return true;
-            }
-
-            return false;
-        }
     }
 }

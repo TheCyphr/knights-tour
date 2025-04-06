@@ -6,22 +6,48 @@ namespace ImprovedKnightsTourSolution.Interfaces
 {
     public interface IMoveChooser
     {
-        public IAccessibilityService AccessibilityService { get; set; }
-        Move ChooseMoveWithLowestAccessibility(int[,] accessibility, Move[] possibleMoves, Point currentPosition);
+        Move ChooseMove(int[,] chessboard, Move[] possibleMoves, Point point);
     }
 
     public class MoveChooser : IMoveChooser
     {
-        public IAccessibilityService AccessibilityService { get; set; }
+        public IMoveRankService MoveRankService { get; set; }
 
-        public MoveChooser(IAccessibilityService accessibilityService)
+        public MoveChooser(IMoveRankService moveRankService)
         {
-            this.AccessibilityService = accessibilityService;
+            this.MoveRankService = moveRankService;
         }
 
-        public Move ChooseMoveWithLowestAccessibility(int[,] chessboard, Move[] possibleMoves, Point currentPosition)
+        public Move ChooseMove(int[,] chessboard, Move[] possibleMoves, Point point)
         {
-            bool IsLastSquareOnChessboard(int[,] board, Point point)
+            var lowestMoveAccessibilityGroup =
+                possibleMoves
+                .Select(move => GetMoveRank(move, point))
+                .Where(mA => mA != null)
+                .GroupBy(mA => mA.Rank)
+                .OrderBy(mAGroup => mAGroup.Key)
+                .FirstOrDefault();
+
+            if (lowestMoveAccessibilityGroup?.Count() == 1)
+            {
+                return lowestMoveAccessibilityGroup.FirstOrDefault()?.Move;
+            }
+
+            var lowestMoveAccessibility = lowestMoveAccessibilityGroup?.Min(mA =>
+            {
+                var pointAfterMove = mA.Move.MovePoint(point);
+                // Set new point square to non default value, so that accessibility does not pick up one extra available move 
+                chessboard[pointAfterMove.Y, pointAfterMove.X] = 10;
+
+                mA.Rank = possibleMoves.Min(move => GetMoveRank(move, pointAfterMove)).Rank;
+                // Reset new point square value
+                chessboard[pointAfterMove.Y, pointAfterMove.X] = 0;
+                return mA;
+            });
+
+            return lowestMoveAccessibility?.Move;
+
+            bool IsLastSquareOnChessboard(int[,] board)
             {
                 int availableSquareCount = 0;
                 
@@ -36,44 +62,17 @@ namespace ImprovedKnightsTourSolution.Interfaces
                 return availableSquareCount == 1;
             }
 
-            MoveAccessiblity GetMoveAccessiblity(Move move, Point point)
+            MoveRank GetMoveRank(Move move, Point pointToMove)
             {
-                var pointAfterMove = move.MovePoint(point);
-                if (!ChessboardUtilities.PointIsOnChessboard(pointAfterMove, chessboard) || chessboard[pointAfterMove.Y, pointAfterMove.X] != 0) return null;
+                var pointAfterMove = move.MovePoint(pointToMove);
+                if (!ChessboardUtilities.OnChessboard(pointAfterMove, chessboard) || chessboard[pointAfterMove.Y, pointAfterMove.X] != 0) return null;
 
-                var moveAccessbility = new MoveAccessiblity(move, AccessibilityService.GetNumberOfAvailableMovesAtPoint(pointAfterMove, possibleMoves, chessboard));
+                var moveAccessibility = new MoveRank(move, MoveRankService.GetAvailableMoveCount(pointAfterMove, possibleMoves, chessboard));
                 // We want to ignore moves that will end the game, until the move is the very last move of the game
-                if (!IsLastSquareOnChessboard(chessboard, pointAfterMove) && moveAccessbility.Accesibility == 0) return null;
+                if (!IsLastSquareOnChessboard(chessboard) && moveAccessibility.Rank == 0) return null;
 
-                return moveAccessbility;
+                return moveAccessibility;
             }
-
-            var lowestMoveAccessiblityGroup =
-                possibleMoves
-                .Select(move => GetMoveAccessiblity(move, currentPosition))
-                .Where(mA => mA != null)
-                .GroupBy(mA => mA.Accesibility)
-                .OrderBy(mAGroup => mAGroup.Key)
-                .FirstOrDefault();
-
-            if (lowestMoveAccessiblityGroup?.Count() == 1)
-            {
-                return lowestMoveAccessiblityGroup.FirstOrDefault()?.Move;
-            }
-
-            var lowestMoveAccessibility = lowestMoveAccessiblityGroup?.Min(mA =>
-            {
-                var pointAfterMove = mA.Move.MovePoint(currentPosition);
-                // Set new point square to non default value, so that accessibility does not pick up one extra available move 
-                chessboard[pointAfterMove.Y, pointAfterMove.X] = 10;
-
-                mA.Accesibility = possibleMoves.Min(move => GetMoveAccessiblity(move, pointAfterMove)).Accesibility;
-                // Reset new point square value
-                chessboard[pointAfterMove.Y, pointAfterMove.X] = 0;
-                return mA;
-            });
-
-            return lowestMoveAccessibility?.Move;
         }
     }
 }

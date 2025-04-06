@@ -4,7 +4,7 @@ namespace ImprovedKnightsTourSolution.Utilities
 {
     public static class ChessboardUtilities
     {
-        public static bool PointIsOnChessboard(Point point, int[,] chessboard)
+        public static bool OnChessboard(Point point, int[,] chessboard)
         {
             return point switch
             {

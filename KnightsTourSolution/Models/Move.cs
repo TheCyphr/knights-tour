@@ -2,15 +2,15 @@
 {
     public class Move
     {
-        public int XMove { get; set; }
-        public int YMove { get; set; }
+        public int X { get; }
+        public int Y { get; }
 
-        public Move(int xMove, int yMove)
+        public Move(int x, int y)
         {
-            XMove = xMove;
-            YMove = yMove;
+            X = x;
+            Y = y;
         }
 
-        public Point MovePoint(Point point) => new Point(point.X + XMove, point.Y + YMove);
+        public Point MovePoint(Point point) => new Point(point.X + X, point.Y + Y);
     }
 }
