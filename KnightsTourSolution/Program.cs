@@ -16,7 +16,7 @@ namespace ImprovedKnightsTourSolution
                     IMoveChooser moveChooser = new MoveChooser();
                     IKnightsTourSimulator knightsTourSimulator = new KnightsTourSimulator(chessboardService, moveChooser);
 
-                    bool isSolved = knightsTourSimulator.Solve(new Point(i, j));
+                    bool isSolved = knightsTourSimulator.Solve(new Knight {Point = new Point(i, j), Id = 1});
                     if (!isSolved) throw new Exception($"Solution failed with starting point ({i}, {j})");
                 }
             }

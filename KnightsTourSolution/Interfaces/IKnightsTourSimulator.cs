@@ -1,11 +1,10 @@
-﻿using ImprovedKnightsTourSolution.Models;
-using System;
+﻿using System;
 
 namespace ImprovedKnightsTourSolution.Interfaces
 {
     public interface IKnightsTourSimulator
     {
-        bool Solve(Point startingPoint);
+        bool Solve(IChessPiece chessPiece);
     }
 
     public class KnightsTourSimulator : IKnightsTourSimulator
@@ -19,23 +18,25 @@ namespace ImprovedKnightsTourSolution.Interfaces
             _moveChooser = moveChooser;
         }
 
-        public bool Solve(Point startingPoint)
+        public bool Solve(IChessPiece chessPiece)
         {
             const int maxMoveCount = 63;
             int moveCount = 0;
-            IChessPiece knight = new Knight {Point = startingPoint, Id = 1};
-            _chessboardService.TryPlace(knight);
+            if (!_chessboardService.TryPlace(chessPiece))
+            {
+                throw new Exception("Starting point is invalid");
+            }
             
             while (true)
             {
-                var move = _moveChooser.Choose(_chessboardService, knight);
+                var move = _moveChooser.Choose(_chessboardService, chessPiece);
                 if (move == null)
                 {
                     return moveCount == maxMoveCount;
                 }
 
-                knight.Point = move.Execute(knight.Point);
-                if (!_chessboardService.TryPlace(knight))
+                chessPiece.Point = move.Execute(chessPiece.Point);
+                if (!_chessboardService.TryPlace(chessPiece))
                 {
                     throw new Exception("Move invalid");
                 }

@@ -2,12 +2,12 @@
 
 namespace ImprovedKnightsTourSolution.Models
 {
-    public class MoveRank : IComparable
+    public class RankedMove : IComparable
     {
         public Move Move { get; }
         public int Rank { get; set; }
 
-        public MoveRank(Move move, int rank)
+        public RankedMove(Move move, int rank)
         {
             Move = move;
             Rank = rank;
@@ -17,10 +17,10 @@ namespace ImprovedKnightsTourSolution.Models
         {
             if (obj == null) return 1;
 
-            if (obj is MoveRank moveRank)
+            if (obj is RankedMove moveRank)
                 return Rank.CompareTo(moveRank.Rank);
             else
-                throw new ArgumentException($"Object is not a {nameof(MoveRank)}");
+                throw new ArgumentException($"Object is not a {nameof(RankedMove)}");
         }
     }
 }
