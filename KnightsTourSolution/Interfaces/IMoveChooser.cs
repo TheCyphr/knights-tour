@@ -1,44 +1,44 @@
 ﻿using ImprovedKnightsTourSolution.Models;
-using ImprovedKnightsTourSolution.Utilities;
 using System.Linq;
 
 namespace ImprovedKnightsTourSolution.Interfaces
 {
     public interface IMoveChooser
     {
-        Move ChooseMove(int[,] chessboard, IChessPiece chessPiece);
+        Move Choose(IChessboardService chessboardService, IChessPiece chessPiece);
     }
 
     public class MoveChooser : IMoveChooser
     {
-        public Move ChooseMove(int[,] chessboard, IChessPiece chessPiece)
+        public Move Choose(IChessboardService chessboardService, IChessPiece chessPiece)
         {
-            var lowestMoveAccessibilityGroup =
+            var bestMoveGroup =
                 chessPiece.Moves
                 .Select(move => GetMoveRank(move, chessPiece.Point))
-                .Where(mA => mA != null)
-                .GroupBy(mA => mA.Rank)
-                .OrderBy(mAGroup => mAGroup.Key)
+                .Where(moveRank => moveRank != null)
+                .GroupBy(moveRank => moveRank.Rank)
+                .OrderBy(moveRanks => moveRanks.Key)
                 .FirstOrDefault();
 
-            if (lowestMoveAccessibilityGroup?.Count() == 1)
+            if (bestMoveGroup == null) return null;
+            
+            if (bestMoveGroup.Count() == 1)
             {
-                return lowestMoveAccessibilityGroup.FirstOrDefault()?.Move;
+                return bestMoveGroup.First().Move;
             }
 
-            var lowestMoveAccessibility = lowestMoveAccessibilityGroup?.Min(moveRank =>
+            var bestMoveRank = bestMoveGroup.Min(moveRank =>
             {
                 var pointAfterMove = moveRank.Move.Execute(chessPiece.Point);
-                // Set new point square to non default value, so that accessibility does not pick up one extra available move 
-                chessboard[pointAfterMove.Y, pointAfterMove.X] = 10;
+                chessboardService.Chessboard[pointAfterMove.Y, pointAfterMove.X] = chessPiece.Id;
 
                 moveRank.Rank = chessPiece.Moves.Min(move => GetMoveRank(move, pointAfterMove)).Rank;
-                // Reset new point square value
-                chessboard[pointAfterMove.Y, pointAfterMove.X] = 0;
+                chessboardService.Chessboard[pointAfterMove.Y, pointAfterMove.X] = chessboardService.DefaultSquareValue;
+                
                 return moveRank;
             });
 
-            return lowestMoveAccessibility?.Move;
+            return bestMoveRank?.Move;
 
             bool IsLastSquareOnChessboard(int[,] board)
             {
@@ -58,24 +58,19 @@ namespace ImprovedKnightsTourSolution.Interfaces
             MoveRank GetMoveRank(Move move, Point pointToMove)
             {
                 var pointAfterMove = move.Execute(pointToMove);
-                if (!ChessboardUtilities.OnChessboard(pointAfterMove, chessboard) || chessboard[pointAfterMove.Y, pointAfterMove.X] != 0) return null;
+                if (!IsValid(pointAfterMove)) return null;
 
-                var moveRank = new MoveRank(move, GetValidMoveCount(pointAfterMove, chessPiece.Moves));
-                // We want to ignore moves that will end the game, until the move is the very last move of the game
-                if (!IsLastSquareOnChessboard(chessboard) && moveRank.Rank == 0) return null;
+                var moveRank = new MoveRank(move, chessPiece.Moves.Count(m => IsValid(m.Execute(pointAfterMove))));
+                // Until the final move, ignore moves that do not allow further moves
+                if (!IsLastSquareOnChessboard(chessboardService.Chessboard) && moveRank.Rank == 0) return null;
 
                 return moveRank;
             }
             
-            int GetValidMoveCount(Point point, Move[] moves, int defaultSquareValue = 0)
+            bool IsValid(Point point)
             {
-                return moves.Where(move =>
-                {
-                    var pointAfterMove = move.Execute(point);
-                    var pointIsOnChessboard = ChessboardUtilities.OnChessboard(pointAfterMove, chessboard);
-
-                    return pointIsOnChessboard && chessboard[pointAfterMove.Y, pointAfterMove.X] == defaultSquareValue;
-                }).Count();
+                return chessboardService.OnChessboard(point) && 
+                       chessboardService.Chessboard[point.Y, point.X] == chessboardService.DefaultSquareValue;
             }
         }
     }

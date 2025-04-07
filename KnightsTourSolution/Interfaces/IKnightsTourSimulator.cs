@@ -28,7 +28,7 @@ namespace ImprovedKnightsTourSolution.Interfaces
             
             while (true)
             {
-                var move = _moveChooser.ChooseMove(_chessboardService.Chessboard, knight);
+                var move = _moveChooser.Choose(_chessboardService, knight);
                 if (move == null)
                 {
                     return moveCount == maxMoveCount;
