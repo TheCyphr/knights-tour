@@ -11,6 +11,6 @@
             Y = y;
         }
 
-        public Point MovePoint(Point point) => new Point(point.X + X, point.Y + Y);
+        public Point Execute(Point point) => new Point(point.X + X, point.Y + Y);
     }
 }

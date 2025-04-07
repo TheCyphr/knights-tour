@@ -6,23 +6,16 @@ namespace ImprovedKnightsTourSolution.Interfaces
 {
     public interface IMoveChooser
     {
-        Move ChooseMove(int[,] chessboard, Move[] possibleMoves, Point point);
+        Move ChooseMove(int[,] chessboard, IChessPiece chessPiece);
     }
 
     public class MoveChooser : IMoveChooser
     {
-        public IMoveRankService MoveRankService { get; set; }
-
-        public MoveChooser(IMoveRankService moveRankService)
-        {
-            this.MoveRankService = moveRankService;
-        }
-
-        public Move ChooseMove(int[,] chessboard, Move[] possibleMoves, Point point)
+        public Move ChooseMove(int[,] chessboard, IChessPiece chessPiece)
         {
             var lowestMoveAccessibilityGroup =
-                possibleMoves
-                .Select(move => GetMoveRank(move, point))
+                chessPiece.Moves
+                .Select(move => GetMoveRank(move, chessPiece.Point))
                 .Where(mA => mA != null)
                 .GroupBy(mA => mA.Rank)
                 .OrderBy(mAGroup => mAGroup.Key)
@@ -33,16 +26,16 @@ namespace ImprovedKnightsTourSolution.Interfaces
                 return lowestMoveAccessibilityGroup.FirstOrDefault()?.Move;
             }
 
-            var lowestMoveAccessibility = lowestMoveAccessibilityGroup?.Min(mA =>
+            var lowestMoveAccessibility = lowestMoveAccessibilityGroup?.Min(moveRank =>
             {
-                var pointAfterMove = mA.Move.MovePoint(point);
+                var pointAfterMove = moveRank.Move.Execute(chessPiece.Point);
                 // Set new point square to non default value, so that accessibility does not pick up one extra available move 
                 chessboard[pointAfterMove.Y, pointAfterMove.X] = 10;
 
-                mA.Rank = possibleMoves.Min(move => GetMoveRank(move, pointAfterMove)).Rank;
+                moveRank.Rank = chessPiece.Moves.Min(move => GetMoveRank(move, pointAfterMove)).Rank;
                 // Reset new point square value
                 chessboard[pointAfterMove.Y, pointAfterMove.X] = 0;
-                return mA;
+                return moveRank;
             });
 
             return lowestMoveAccessibility?.Move;
@@ -64,14 +57,25 @@ namespace ImprovedKnightsTourSolution.Interfaces
 
             MoveRank GetMoveRank(Move move, Point pointToMove)
             {
-                var pointAfterMove = move.MovePoint(pointToMove);
+                var pointAfterMove = move.Execute(pointToMove);
                 if (!ChessboardUtilities.OnChessboard(pointAfterMove, chessboard) || chessboard[pointAfterMove.Y, pointAfterMove.X] != 0) return null;
 
-                var moveAccessibility = new MoveRank(move, MoveRankService.GetAvailableMoveCount(pointAfterMove, possibleMoves, chessboard));
+                var moveRank = new MoveRank(move, GetValidMoveCount(pointAfterMove, chessPiece.Moves));
                 // We want to ignore moves that will end the game, until the move is the very last move of the game
-                if (!IsLastSquareOnChessboard(chessboard) && moveAccessibility.Rank == 0) return null;
+                if (!IsLastSquareOnChessboard(chessboard) && moveRank.Rank == 0) return null;
 
-                return moveAccessibility;
+                return moveRank;
+            }
+            
+            int GetValidMoveCount(Point point, Move[] moves, int defaultSquareValue = 0)
+            {
+                return moves.Where(move =>
+                {
+                    var pointAfterMove = move.Execute(point);
+                    var pointIsOnChessboard = ChessboardUtilities.OnChessboard(pointAfterMove, chessboard);
+
+                    return pointIsOnChessboard && chessboard[pointAfterMove.Y, pointAfterMove.X] == defaultSquareValue;
+                }).Count();
             }
         }
     }

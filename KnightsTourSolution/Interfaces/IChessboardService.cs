@@ -1,46 +1,24 @@
-﻿using ImprovedKnightsTourSolution.Models;
-using ImprovedKnightsTourSolution.Utilities;
-using System.Collections.Generic;
+﻿using ImprovedKnightsTourSolution.Utilities;
 
 namespace ImprovedKnightsTourSolution.Interfaces
 {
     public interface IChessboardService
     {
         public int[,] Chessboard { get; }
-        public bool TrySetSquareValue(Point point, char identifier);
+        public bool TryPlace(IChessPiece piece);
     }
 
     public class ChessboardService : IChessboardService
     {
         public int[,] Chessboard { get; } = new int[8, 8];
-        private readonly Dictionary<int, char> _chessboardSquareIdentifiers = new Dictionary<int, char> { { 0, DEFAULT_IDENTIFIER } };
-        private const char DEFAULT_IDENTIFIER = '0';
 
-        private int AssignIdentifierIndex(char identifier)
+        public bool TryPlace(IChessPiece piece)
         {
-            int identifierIndex = _chessboardSquareIdentifiers.Count;
-            
-            foreach (var (key, value) in _chessboardSquareIdentifiers)
-            {
-                if (value == identifier)
-                {
-                    identifierIndex = key;
-                }
-            }
-            
-            _chessboardSquareIdentifiers[identifierIndex] = identifier;
-            return identifierIndex;
-        }
-
-        public bool TrySetSquareValue(Point point, char identifier)
-        {
-            var identifierIndex = AssignIdentifierIndex(identifier);
-
-            var onChessboard = ChessboardUtilities.OnChessboard(point, Chessboard);
+            var onChessboard = ChessboardUtilities.OnChessboard(piece.Point, Chessboard);
 
             if (onChessboard)
             {
-                Chessboard[point.Y, point.X] = identifierIndex;
+                Chessboard[piece.Point.Y, piece.Point.X] = piece.Id;
             }
 
             return onChessboard;

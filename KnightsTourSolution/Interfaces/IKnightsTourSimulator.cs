@@ -12,40 +12,33 @@ namespace ImprovedKnightsTourSolution.Interfaces
     {
         private readonly IChessboardService _chessboardService;
         private readonly IMoveChooser _moveChooser;
-        private readonly IKnightMover _knightMover;
 
-        public KnightsTourSimulator(IChessboardService chessboardService, IMoveChooser moveChooser, IKnightMover knightMover)
+        public KnightsTourSimulator(IChessboardService chessboardService, IMoveChooser moveChooser)
         {
             _chessboardService = chessboardService;
             _moveChooser = moveChooser;
-            _knightMover = knightMover;
         }
 
         public bool Solve(Point startingPoint)
         {
-            var knight = new Knight {Point = startingPoint};
-            const char knightIdentifier = 'K';
-
-            _chessboardService.TrySetSquareValue(knight.Point, knightIdentifier);
-            
+            const int maxMoveCount = 63;
             int moveCount = 0;
+            IChessPiece knight = new Knight {Point = startingPoint, Id = 1};
+            _chessboardService.TryPlace(knight);
             
             while (true)
             {
-                var bestMove = _moveChooser.ChooseMove(_chessboardService.Chessboard, _knightMover.Moves, knight.Point);
-
-                if (bestMove == null)
+                var move = _moveChooser.ChooseMove(_chessboardService.Chessboard, knight);
+                if (move == null)
                 {
-                    return moveCount == 63;
+                    return moveCount == maxMoveCount;
                 }
 
-                if (_chessboardService.TrySetSquareValue(bestMove.MovePoint(knight.Point), knightIdentifier))
+                knight.Point = move.Execute(knight.Point);
+                if (!_chessboardService.TryPlace(knight))
                 {
-                    knight.Point = bestMove.MovePoint(knight.Point);
-                }
-                else
                     throw new Exception("Move invalid");
-                
+                }
                 moveCount++;
             }
         }
