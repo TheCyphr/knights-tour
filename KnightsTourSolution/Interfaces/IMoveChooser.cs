@@ -1,76 +1,60 @@
-﻿using ImprovedKnightsTourSolution.Models;
-using System.Linq;
+﻿using System.Linq;
+using KnightsTourSolution.Models;
 
-namespace ImprovedKnightsTourSolution.Interfaces
+namespace KnightsTourSolution.Interfaces
 {
     public interface IMoveChooser
     {
-        Move Choose(IChessboardService chessboardService, IChessPiece chessPiece);
+        Move Choose(IChessboard chessboard, IChessPiece chessPiece);
     }
 
     public class MoveChooser : IMoveChooser
     {
-        public Move Choose(IChessboardService chessboardService, IChessPiece chessPiece)
+        public Move Choose(IChessboard chessboard, IChessPiece chessPiece)
         {
-            var lowestRankedMoves =
+            var highestPriorityMoves =
                 chessPiece.Moves
-                .Select(move => RankMove(move, chessPiece.Point))
+                .Select(move => PrioritiseMove(move, chessPiece.Point))
                 .Where(rankedMove => rankedMove != null)
-                .GroupBy(rankedMove => rankedMove.Rank)
+                .GroupBy(rankedMove => rankedMove.ExecutePriority)
                 .OrderBy(rankedMoves => rankedMoves.Key)
                 .FirstOrDefault();
 
-            if (lowestRankedMoves == null) return null;
+            if (highestPriorityMoves == null) return null;
             
-            if (lowestRankedMoves.Count() == 1)
+            if (highestPriorityMoves.Count() == 1)
             {
-                return lowestRankedMoves.First().Move;
+                return highestPriorityMoves.First().Move;
             }
 
-            var lowestRankedMove = lowestRankedMoves.Min(rankedMove =>
+            var highestPriorityMove = highestPriorityMoves.Min(prioritisedMove =>
             {
-                var movedPoint = rankedMove.Move.Execute(chessPiece.Point);
-                chessboardService.Chessboard[movedPoint.Y, movedPoint.X] = chessPiece.Id;
-
-                rankedMove.Rank = chessPiece.Moves.Min(move => RankMove(move, movedPoint)).Rank;
-                chessboardService.Chessboard[movedPoint.Y, movedPoint.X] = chessboardService.DefaultSquareValue;
+                var movedPoint = prioritisedMove.Move.Execute(chessPiece.Point);
+                prioritisedMove.ExecutePriority = chessPiece.Moves.Min(move => PrioritiseMove(move, movedPoint)).ExecutePriority;
                 
-                return rankedMove;
+                return prioritisedMove;
             });
 
-            return lowestRankedMove?.Move;
+            return highestPriorityMove?.Move;
 
-            bool IsLastSquareOnChessboard(int[,] board)
+            PrioritisedMove PrioritiseMove(Move move, Point point)
             {
-                int availableSquareCount = 0;
-                
-                for (int row = 0; row < board.GetLength(0); row++)
+                var pointAfterMove = move.Execute(point);
+                if (!chessboard.CanMoveTo(pointAfterMove))
                 {
-                    for (int column = 0; column < board.GetLength(1); column++)
-                    {
-                        if (board[column, row] == 0 && ++availableSquareCount > 1) return false;
-                    }
+                    return null;
                 }
 
-                return true;
-            }
-
-            RankedMove RankMove(Move move, Point pointToMove)
-            {
-                var pointAfterMove = move.Execute(pointToMove);
-                if (!IsValid(pointAfterMove)) return null;
-
-                var rankedMove = new RankedMove(move, chessPiece.Moves.Count(m => IsValid(m.Execute(pointAfterMove))));
-                // Until the final move, ignore moves that do not allow further moves
-                if (!IsLastSquareOnChessboard(chessboardService.Chessboard) && rankedMove.Rank == 0) return null;
-
-                return rankedMove;
-            }
-            
-            bool IsValid(Point point)
-            {
-                return chessboardService.OnChessboard(point) && 
-                       chessboardService.Chessboard[point.Y, point.X] == chessboardService.DefaultSquareValue;
+                // Determine execute priority based on number of available subsequent moves
+                var subsequentMoveCount = chessPiece.Moves.Count(m => chessboard.CanMoveTo(m.Execute(pointAfterMove)));
+                // Until the final move, ignore moves that have no subsequent moves
+                if (chessboard.EmptySquareCount > 1 &&
+                    subsequentMoveCount == 0)
+                {
+                    return null;
+                }
+                
+                return new PrioritisedMove(move, subsequentMoveCount);
             }
         }
     }

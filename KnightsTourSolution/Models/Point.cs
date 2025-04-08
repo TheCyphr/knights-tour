@@ -1,4 +1,4 @@
-﻿namespace ImprovedKnightsTourSolution.Models
+﻿namespace KnightsTourSolution.Models
 {
     public struct Point
     {

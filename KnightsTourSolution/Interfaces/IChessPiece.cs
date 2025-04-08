@@ -1,6 +1,6 @@
-using ImprovedKnightsTourSolution.Models;
+using KnightsTourSolution.Models;
 
-namespace ImprovedKnightsTourSolution.Interfaces
+namespace KnightsTourSolution.Interfaces
 {
     public interface IChessPiece
     {

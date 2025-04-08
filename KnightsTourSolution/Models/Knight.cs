@@ -1,6 +1,6 @@
-﻿using ImprovedKnightsTourSolution.Interfaces;
+﻿using KnightsTourSolution.Interfaces;
 
-namespace ImprovedKnightsTourSolution.Models
+namespace KnightsTourSolution.Models
 {
     public class Knight : IChessPiece
     {
